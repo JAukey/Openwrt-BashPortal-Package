@@ -1,0 +1,38 @@
+#!/bin/sh /etc/rc.common 
+# Copyright (C) 2006 OpenWrt.org
+START=98
+EXTRA_COMMANDS="status"
+EXTRA_HELP="status Print the status of the service"
+local interfaces=""
+section_enabled(){
+	config_get_bool enabled "$1" 'enabled' 0
+	[ $enabled -gt 0 ]
+}
+create_config(){
+	config_load bashportal
+	config_get hostip "base" "hostip" "192.168.1.1"
+	config_get httpport "base" "httpport" "2561"
+	config_get httppath "base" "httppath" "/etc/bashportal/html"
+	config_get interface "interface" "interface" "br-lan"	
+	for i in $interface;do
+		interfaces="$interfaces,$i"
+	done
+}	
+start(){
+	config_load bashportal
+	section_enabled "base" || return 1
+	create_config
+        /usr/bin/bashportal start "$interfaces $hostip:$httpport"
+}
+stop(){ 
+	config_load bashportal
+	section_enabled "base" || return 1
+	create_config
+        /usr/bin/bashportal stop "$interfaces"
+}
+restart(){
+	echo "Plese use start and stop!"
+}
+status(){
+	/usr/bin/bashportal status
+}
