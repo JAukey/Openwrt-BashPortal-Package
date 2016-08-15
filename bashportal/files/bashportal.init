@@ -19,6 +19,7 @@ get_config(){
 	config_get httpport "base" "httpport" "2561"
 	config_get portalpath "base" "portalpath" "/etc/bashportal/html"
 	config_get luafile "base" "luafile" "/etc/bashportal/html/lua/portal.lua"
+	config_get ngxconf "base" "ngxconf" "/etc/nginx/nginx.conf"
 	config_get interface "interface" "interface" "br-lan"	
 	for i in $interface;do
 		interfaces="$interfaces,$i"
@@ -42,20 +43,24 @@ echo "server {
 	location / {
         rewrite ^(.*)$ http://$hostname.lan:$httpport/portal;
         }
-    }" > /tmp/ngx_server_file
+    }" > /tmp/ngx_server.conf
 }	
 start(){
 	config_load bashportal
 	section_enabled "base" || return 1
 	get_config
 	create_ngx_server_file $hostname $httpport $portalpath $luafile
-        /usr/bin/bashportal start "$interfaces $hostip:$httpport"
+        sed -i '/http {/a\include /tmp/ngx_server.conf;' $ngxconf
+	/etc/init.d/nginx restart
+	/usr/bin/bashportal start "$interfaces $hostip:$httpport"
 }
 stop(){ 
 	config_load bashportal
 	section_enabled "base" || return 1
 	get_config
-        /usr/bin/bashportal stop "$interfaces"
+	sed -i '/ngx_server.conf/d' $ngxconf
+	/etc/init.d/nginx restart
+	/usr/bin/bashportal stop "$interfaces"
 }
 restart(){
 	echo "Plese use start and stop!"
