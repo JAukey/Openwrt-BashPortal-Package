@@ -35,6 +35,9 @@ endef
 define Package/bashportal/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bash_portal.sh $(1)/usr/bin/bashportal
+    
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/clientkick.init $(1)/usr/bin/clientkick
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/bashportal.init $(1)/etc/init.d/bashportal

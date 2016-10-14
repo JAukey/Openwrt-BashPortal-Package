@@ -17,6 +17,8 @@ get_config(){
 	config_get luafile "base" "luafile" "/etc/bashportal/html/lua/portal.lua"
 	config_get ngxconf "base" "ngxconf" "/etc/nginx/nginx.conf"
 	config_get interfaces "base" "interfaces" "br-lan"	
+	config_get_bool activityen "base" "activityen" "0"
+	config_get activitytime "base" "activitytime" "0"
         config_load system
 	config_foreach system_config system
         config_load network
@@ -47,9 +49,14 @@ start(){
 	section_enabled "base" || return 1
 	get_config
 	create_ngx_server_file $hostname $httpport $portalpath $luafile
-        sed -i '/http {/a\include /tmp/ngx_server.conf;' $ngxconf
+	sed -i '/ngx_server.conf/d' $ngxconf
+	sed -i '/http {/a\include /tmp/ngx_server.conf;' $ngxconf
 	/etc/init.d/nginx restart
 	/usr/bin/bashportal start "$interfaces $hostip:$httpport"
+	if [ $activityen -gt 0 ];then
+		/usr/bin/killall -9 clientkick
+		/usr/bin/clientkick $activitytime & 
+	fi
 }
 stop(){ 
 	config_load bashportal
@@ -57,6 +64,7 @@ stop(){
 	sed -i '/ngx_server.conf/d' $ngxconf
 	/etc/init.d/nginx restart
 	/usr/bin/bashportal stop "$interfaces"
+	/usr/bin/killall -9 clientkick
 }
 status(){
 	/usr/bin/bashportal status
